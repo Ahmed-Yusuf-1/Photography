@@ -5,7 +5,7 @@ import { getStorage } from 'firebase/storage'; // Added for future image uploads
 
 const firebaseConfig = {
   // REPLACE WITH YOUR REAL FIREBASE CONFIG KEYS
-  apiKey: "AIzaSyCEBf4W6wZgmBO5KdjerkNiIXva_kAFmr8",
+  apiKey: "",
   authDomain: "photography-80e8c.firebaseapp.com",
   projectId: "photography-80e8c",
   storageBucket: "photography-80e8c.firebasestorage.app",
