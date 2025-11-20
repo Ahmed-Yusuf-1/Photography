@@ -49,9 +49,9 @@ export default function Quote({ user, showNotification }) {
 
       // 2. Send Email via EmailJS
       // NOTE: Replace these strings with your actual EmailJS keys
-      const serviceID = "YOUR_SERVICE_ID"; 
-      const templateID = "YOUR_TEMPLATE_ID"; 
-      const publicKey = "YOUR_PUBLIC_KEY"; 
+      const serviceID = "service_4xbj7v8"; 
+      const templateID = "template_57d3x09"; 
+      const publicKey = "h8YPTrpzEHdlFy8s-"; 
 
       const templateParams = {
         to_name: formData.name,

@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState, useEffect } from 'react';
 import { auth } from './config/firebase';
@@ -9,16 +8,21 @@ import Home from './pages/Home';
 import Portfolio from './pages/Portfolio';
 import Services from './pages/Services';
 import Quote from './pages/Quote';
+import Admin from './pages/Admin'; // <--- IMPORT THIS
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [user, setUser] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  // Initialize Auth
   useEffect(() => {
-    signInAnonymously(auth).catch(console.error);
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      // If no user is logged in at all, sign in anonymously for public access
+      if (!u) {
+        signInAnonymously(auth).catch(console.error);
+      }
+    });
     return () => unsubscribe();
   }, []);
 
@@ -47,9 +51,11 @@ export default function App() {
         {currentPage === 'portfolio' && <Portfolio />}
         {currentPage === 'services' && <Services navigateTo={navigateTo} />}
         {currentPage === 'quote' && <Quote user={user} showNotification={showNotification} />}
+        {currentPage === 'admin' && <Admin user={user} />} 
       </main>
 
-      <Footer />
+      {/* UPDATE THIS SECTION: Pass navigateTo to the Footer */}
+      {currentPage !== 'admin' && <Footer navigateTo={navigateTo} />}
     </div>
   );
 }

@@ -1,20 +1,24 @@
-// src/config/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getAuth, getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage'; // Added for future image uploads
+import { getAuth } from 'firebase/auth';          
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+
+// src/config/firebase.js
+// ... imports ...
 
 const firebaseConfig = {
-  // REPLACE WITH YOUR REAL FIREBASE CONFIG KEYS
-  apiKey: "",
-  authDomain: "photography-80e8c.firebaseapp.com",
-  projectId: "photography-80e8c",
-  storageBucket: "photography-80e8c.firebasestorage.app",
-  messagingSenderId: "817681772182",
-  appId: "1:817681772182:web:4b2738b6f9f20f77fc9cb7"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
+
+// ... rest of the file
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const appId = 'lumos-lens-v1'; // Unique ID for your artifact logic
+export const appId = 'lumos-lens-v1'; 
