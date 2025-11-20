@@ -21,7 +21,7 @@ export default function Navbar({ currentPage, navigateTo }) {
             <Camera className="h-10 w-10 text-yellow-500" />
             {/* To change Text Size: Change text-3xl */}
             <span className="ml-3 text-3xl font-bold tracking-tighter">
-              AFNAN <span className="text-yellow-500">BAHUBESHI</span>
+              AFNAN|<span className="text-yellow-500">BAHUBESHI</span>
             </span>
           </div>
           
