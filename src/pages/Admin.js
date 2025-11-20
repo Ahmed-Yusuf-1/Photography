@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, query, orderBy, doc, updateDoc, addDoc, serverTimestamp, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { auth, db, storage, appId } from '../config/firebase';
-import { Lock, LogOut, Calendar, Mail, CheckCircle, Upload, Trash2 } from 'lucide-react';
+import { Lock, LogOut, Upload, Trash2 } from 'lucide-react';
 
 export default function Admin({ user }) {
   // --- Auth States ---
@@ -27,7 +27,7 @@ export default function Admin({ user }) {
     }
   }, [user]);
 
-  // --- REAL-TIME DATA LISTENER (Fixes the lag/missing items) ---
+  // --- REAL-TIME DATA LISTENER ---
   useEffect(() => {
     if (!isAdmin) return;
 
@@ -64,18 +64,37 @@ export default function Admin({ user }) {
     } catch (error) { console.error("Error:", error); }
   };
 
-  // --- UPLOAD LOGIC (Removed Alert + Better Reset) ---
+  // --- FIXED: Delete Image Function ---
+  const handleDeleteImage = async (image) => {
+    if (!window.confirm("Are you sure you want to delete this image?")) return;
+    
+    try {
+      // 1. Delete from Firestore first
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'portfolio_images', image.id));
+      
+      // 2. Delete from Storage (if path exists)
+      if (image.storagePath) {
+        const imageRef = ref(storage, image.storagePath);
+        await deleteObject(imageRef).catch(err => console.warn("Storage delete failed (might already be gone):", err));
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Failed to delete image. Check console for details.");
+    }
+  };
+
+  // --- UPLOAD LOGIC ---
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!selectedFile) return;
     
-    setUploading(true);
+    setUploading(true); // Lock button
 
     try {
       // 1. Upload to Storage
       const storageRef = ref(storage, `portfolio/${Date.now()}_${selectedFile.name}`);
-      await uploadBytes(storageRef, selectedFile);
-      const url = await getDownloadURL(storageRef);
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      const url = await getDownloadURL(snapshot.ref);
 
       // 2. Save to Database
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'portfolio_images'), {
@@ -84,25 +103,20 @@ export default function Admin({ user }) {
         storagePath: storageRef.fullPath,
         createdAt: serverTimestamp()
       });
-      
-      // 3. SUCCESS! Now force a hard reset of the form
-      console.log("Upload success!");
+
       
     } catch (error) {
-      console.error("Upload Error:", error);
-      alert("Upload failed. Check console.");
+      console.error("Error:", error);
+      alert("Upload Failed: " + error.message);
     } finally {
-      // 4. THIS BLOCK ALWAYS RUNS (Fixes the freezing)
+      // 3. ALWAYS RESET (Fixes the freezing)
       setUploading(false); 
-      setSelectedFile(null); // Clear the state memory of the file
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Clear the visual input box
-      }
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   if (!isAdmin) {
-    // ... Login UI (Keep same as before) ...
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 animate-fade-in">
         <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-gray-100">
@@ -114,8 +128,8 @@ export default function Admin({ user }) {
           </div>
           {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
           <form onSubmit={handleLogin} className="space-y-6">
-            <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required />
-            <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required />
+            <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900" required />
+            <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900" required />
             <button type="submit" className="w-full py-3 bg-gray-900 text-white font-bold rounded-lg hover:bg-gray-800">Login</button>
           </form>
         </div>
@@ -146,7 +160,7 @@ export default function Admin({ user }) {
           </div>
           <div className="w-full md:w-48">
              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-             <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none">
+             <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-gray-900">
                <option>Wedding</option>
                <option>Portrait</option>
                <option>Event</option>
@@ -171,7 +185,7 @@ export default function Admin({ user }) {
               {portfolio.map(img => (
                 <div key={img.id} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden">
                   <img src={img.url} alt={img.cat} className="w-full h-full object-cover" />
-                  <button onClick={() => handleDeleteImage(img)} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600">
+                  <button onClick={() => handleDeleteImage(img)} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600 cursor-pointer">
                     <Trash2 className="w-4 h-4" />
                   </button>
                   <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">{img.cat}</div>
@@ -197,7 +211,7 @@ export default function Admin({ user }) {
                   <td className="p-4">{quote.date}</td>
                   <td className="p-4">${quote.estimatedQuote}</td>
                   <td className="p-4"><span className="px-2 py-0.5 bg-gray-100 rounded">{quote.status}</span></td>
-                  <td className="p-4">{quote.status === 'new' && <button onClick={() => markAsContacted(quote.id)} className="text-xs border px-2 py-1 rounded">Done</button>}</td>
+                  <td className="p-4">{quote.status === 'new' && <button onClick={() => markAsContacted(quote.id)} className="text-xs border px-2 py-1 rounded hover:bg-gray-100">Done</button>}</td>
                 </tr>
               ))}
             </tbody>
